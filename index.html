@@ -1,0 +1,412 @@
+<html>
+    <head>
+        <title>First Game</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+        <style>
+            body {
+                background-color: #01579b;
+                color: white;
+            }
+
+            .head {
+                margin-top: 20px;
+                text-align: center;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .center {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .game-container {
+                width: 100%;
+                padding: 20px;
+            }
+
+            .game-table tr {
+                vertical-align: top;
+            }
+
+            .game-screen {
+                background-color: white;
+                border: 5px solid black;
+            }
+
+            .game-score {
+                margin-left: 30px;
+                background-color: #58a5f0;
+                height: 100%;
+                width: 100%;
+                padding: 20px;
+                border-radius: 10px;
+            }
+
+            .score-title {
+                display: block;
+                color: #fbc02d;
+                text-align: center;
+                margin-bottom: 10px;
+            }
+
+            .score-board {
+                width: 100%;
+                font-size: 13px;
+                font-family: Arial, Helvetica, sans-serif
+            }
+
+            .score-board tr.header td {
+                border-bottom: 1px solid #01579b;
+                padding-bottom: 8px;
+                color: #01579b;
+                font-weight: bold;
+            }
+
+            .score-board tr.footer td {
+                border-top: 1px solid #01579b;
+                font-size: 11px;
+                color: #01579b;
+                font-weight: bold;
+            }
+
+            .score-board td {
+                padding-top: 5px;
+                padding-bottom: 5px;
+            }
+
+            .score-board .rank {
+                font-weight: bold;
+                color: #01579b;
+            }
+
+            .score-board .player {
+                font-weight: normal;
+                color: #01579b;
+            }
+
+            .score-board .score {
+                font-weight: bold;
+                color: #01579b;
+                text-align: right;
+            }
+
+            .score-board .current-player .rank,
+            .score-board .current-player .player,
+            .score-board .current-player .score {
+                color: #fbc02d;
+            }
+
+            .play-button {
+                color:black;
+                font-weight: bold;
+                margin-left: 10px;
+            }
+
+        </style>
+    </head>
+    <body>
+
+        <div class="head">
+            <h1>FIRST GAME</h1>
+        </div>
+        
+        <div class="content">
+            
+            <div class="row" id="joinForm">
+                <div class="col-xs-offset-2 col-xs-8 text-center">
+        
+                    <form class="form-inline" role="form">
+                        <div class="form-group">
+                          <input type="text" class="form-control" id="nickname" maxlength="15" placeholder="Nickname" onkeypress="handleJoinGame(event)">
+                        </div>
+                        <button type="button" class="btn btn-warning play-button" id="joinButton" onclick="joinGame()">JOGAR</button>
+                    </form> 
+
+                </div>
+            </div>                 
+                    
+            <div class="game-container">
+                <table class="game-table center">
+                    <tr style="height: 1px;">
+                        <td style="width: 70%;">
+                            <canvas id="gameScreen" class="game-screen"></canvas>
+                        </td>
+                        <td style="height: inherit; width: 30%;">
+                            <div class="game-score">
+                                <label class="score-title">SCORE</label>
+                                <table class="score-board" id="scoreBoard">
+                                    <tr class="header">
+                                        <td></td>
+                                        <td>Jogador</td>
+                                        <td align="right">Pontos</td>
+                                    </tr>
+                                    <tr class="footer">
+                                        <td colspan="2">Total de jogadores</td>
+                                        <td align="right">0</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+                </table>                
+            </div>
+
+        </div>
+
+        <script>
+            const canvasScreen = document.getElementById('gameScreen');
+            const scoreBoard = document.getElementById('scoreBoard');
+            const screen = canvasScreen.getContext('2d');
+            const game = createGame();
+            var currentPlayer = {};
+            renderScreen();
+            requestAnimationFrame(renderGame);
+
+
+            //-----------BEGIN - SCREEN FUNCTIONS
+
+            function renderScreen() {
+                canvasScreen.width = game.screenWidth;
+                canvasScreen.height = game.screenHeight;
+
+                document.addEventListener('keydown', keydownListener);
+                document.getElementById('nickname').focus();
+            }
+
+            function renderGame() {
+
+                screen.globalAlpha = 1;
+                screen.fillStyle = 'white';
+                screen.fillRect(0, 0, game.screenWidth, game.screenHeight);
+
+                //Render Players
+                for(let playerId in game.players) {
+                    let player = game.players[playerId];
+                    screen.fillStyle = player.name == currentPlayer.name ? '#fbc02d' : '#002f6c';
+                    screen.globalAlpha = 0.8;
+                    screen.fillRect(player.x, player.y, game.objectWidth, game.objectHeight);
+
+                    screen.globalAlpha = 1;
+                    screen.textAlign = 'center';
+                    screen.fillText(player.name, (player.x + game.objectWidth/2), (player.y + game.objectHeight + game.objectHeight/2));
+                }
+
+                //Render Goals
+                for(let goalId in game.goals) {
+                    let goal = game.goals[goalId];
+                    screen.fillStyle = '#4caf50';
+                    screen.globalAlpha = 1;
+                    screen.fillRect(goal.x, goal.y, game.objectWidth, game.objectHeight);
+                }
+
+                renderScore();
+                requestAnimationFrame(renderGame);
+
+            }
+
+            function renderScore() {
+
+                const maxResults = 10;
+                let scoreTableInnerHtml = `
+                    <tr class="header">
+                        <td></td>
+                        <td>Top ${maxResults} Jogadores</td>
+                        <td align="right">Pontos</td>
+                    </tr>
+                `;
+
+                let gamePlayers = [];
+
+                game.players.forEach((player) => {
+                    gamePlayers.push(player);
+                })
+
+                let playersByScore = gamePlayers.sort((a,b) => { return b.score - a.score });
+                let top10Players = playersByScore.slice(0, maxResults);
+
+                top10Players.forEach((player, index) => {
+                    scoreTableInnerHtml += `
+                        <tr class="${ player.name === currentPlayer.name ? 'current-player' : ''}">
+                            <td class="rank">${index+1}º</td>
+                            <td class="player">${player.name}</td>
+                            <td class="score">${player.score}</td>
+                        </tr>
+                    `;
+                })
+
+                if(currentPlayer.name && top10Players.indexOf(currentPlayer) == -1) {
+                    game.players[game.players.indexOf(currentPlayer)]
+                    scoreTableInnerHtml += `
+                        <tr>
+                            <td colspan="3" class="text-center">...</td>
+                        </tr>
+                        <tr class="current-player bottom">
+                            <td class="rank">${playersByScore.indexOf(currentPlayer)+1}º</td>
+                            <td class="player">${playersByScore[playersByScore.indexOf(currentPlayer)].name}</td>
+                            <td class="score">${playersByScore[playersByScore.indexOf(currentPlayer)].score}</td>
+                        </tr>
+                    `;
+                }
+
+                scoreTableInnerHtml += `
+                    <tr class="footer">
+                        <td colspan="2">Total de jogadores</td>
+                        <td align="right">${game.players.length}</td>
+                    </tr>
+                `;
+
+                scoreBoard.innerHTML = scoreTableInnerHtml;
+            }
+
+            function keydownListener(event) {                
+                movePlayer(event.key);
+            }
+
+            function handleJoinGame(event) {
+                if(event.key == 'Enter') {
+                    joinGame();
+                    event.preventDefault(); 
+                }                               
+            }
+
+            function joinGame() {
+                let name = document.getElementById('nickname').value;
+
+                if(!name) {
+                    alert('Informe seu nickname para poder jogar');
+                    return;
+                }
+
+                currentPlayer = insertPlayer(name);
+                hideJoinForm();                
+            }
+
+            function hideJoinForm() {
+                document.getElementById('joinForm').style.display = 'none';
+            }
+
+            //-----------END  -  SCREEN FUNCTIONS
+
+            
+            //-----------BEGIN - GAME FUNCTIONS
+
+            function createGame() {
+
+                let screenWidth = 500;
+                let screenHeight = 500;
+
+                return {
+                    screenWidth: screenWidth,
+                    screenHeight: screenHeight,
+                    objectWidth: screenWidth / 20,
+                    objectHeight: screenHeight / 20,                    
+                    players: [],
+                    goals: []
+                }
+
+            }
+
+            function handleGoalCollision(player) {
+                for(let goalId in game.goals) {
+                    
+                    let goal = game.goals[goalId];
+                    if(player.x == goal.x && player.y == goal.y) {
+                        delete game.goals[goalId];
+                        raisePlayerScore(player);
+                    }
+                }
+            }
+
+            function insertPlayer(name) {
+                let x = Math.floor((Math.random() * game.screenWidth) / game.objectWidth) * game.objectWidth; //Considers object width
+                let y = Math.floor((Math.random() * game.screenHeight) / game.objectHeight) * game.objectHeight; //Considers object height
+                let newPlayer = createPlayer(name, x, y);
+
+                game.players.push(newPlayer);
+                return newPlayer;
+            }
+
+            function insertGoal() {
+                let x = Math.floor((Math.random() * game.screenWidth) / game.objectWidth) * game.objectWidth; //Considers object width
+                let y = Math.floor((Math.random() * game.screenHeight) / game.objectHeight) * game.objectHeight; //Considers object height
+                let newGoal = createGoal(x, y);
+
+                game.goals.push(newGoal);
+            }
+
+            //-----------END  -  GAME FUNCTIONS
+
+
+            //-----------BEGIN - PLAYER FUNCTIONS
+
+            function createPlayer(name, x, y) {
+                return {
+                    name: name,
+                    x: x,
+                    y: y,
+                    score: 0
+                }
+            }
+
+            function movePlayer(direction) {
+                
+                let hasMoved = false;
+                switch (direction) {
+                    case 'ArrowUp':
+                        if(currentPlayer.y - game.objectHeight >= 0) {
+                            currentPlayer.y -= game.objectHeight;
+                            hasMoved = true;
+                        }
+
+                        break;
+                    case 'ArrowRight':
+                        if(currentPlayer.x + game.objectWidth < game.screenWidth) {
+                            currentPlayer.x += game.objectWidth;
+                            hasMoved = true;
+                        }
+
+                        break;
+                    case 'ArrowDown':
+                        if(currentPlayer.y + game.objectHeight < game.screenHeight) {
+                            currentPlayer.y += game.objectHeight;
+                            hasMoved = true;
+                        }
+
+                        break;
+                    case 'ArrowLeft':
+                        if(currentPlayer.x - game.objectWidth >= 0) {
+                            currentPlayer.x -= game.objectWidth;
+                            hasMoved = true;
+                        }
+
+                        break;
+                }
+                
+                if(hasMoved)
+                    handleGoalCollision(currentPlayer);
+            }
+
+            //-----------END  -  PLAYER FUNCTIONS
+
+
+            //-----------BEGIN - GOAL FUNCTIONS
+
+            function createGoal(x, y) {
+                return {
+                    x: x,
+                    y: y
+                }
+            }
+
+            function raisePlayerScore(player) {
+                game.players[game.players.indexOf(player)].score++;
+            }
+
+            //-----------END  -  GOAL FUNCTIONS
+
+        </script>
+    </body>
+</html>
