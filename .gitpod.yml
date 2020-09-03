@@ -1,6 +1,7 @@
-image:
-  file: .gitpod.Dockerfile
+ports:
+  - port: 3000
+    onOpen: open-preview
 
 tasks:
-  - init: 'echo "TODO: Replace with init/build command"'
-    command: 'echo "TODO: Replace with command to start project"'
+  - before: echo Initializing
+    command: nvm install 13.3.0 && npm install && npm start
