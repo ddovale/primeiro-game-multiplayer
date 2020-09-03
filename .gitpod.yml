@@ -3,5 +3,5 @@ ports:
     onOpen: open-preview
 
 tasks:
-  - before: echo Initializing
+  - before: cd game
     command: nvm install 13.3.0 && npm install && npm start

@@ -1,0 +1,24 @@
+{
+  "name": "primeiro-game-multiplayer",
+  "version": "1.0.0",
+  "description": "[![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/ddovale/primeiro-game-multiplayer)",
+  "main": "server.js",
+  "scripts": {
+    "start": "nodemon server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ddovale/primeiro-game-multiplayer.git"
+  },
+  "author": "Daniel do Vale",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ddovale/primeiro-game-multiplayer/issues"
+  },
+  "homepage": "https://github.com/ddovale/primeiro-game-multiplayer#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "nodemon": "^2.0.4"
+  }
+}
