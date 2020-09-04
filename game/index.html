@@ -1,7 +1,13 @@
 <html>
     <head>
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <meta http-equiv="Pragma" content="no-cache" />
+        <meta http-equiv="Expires" content="0" />
+        <meta charset="utf-8">
         <title>First Game</title>
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+        <script src="game.js"></script>
+        <script src="render-game.js"></script>
         <style>
             body {
                 background-color: #01579b;
@@ -122,7 +128,7 @@
                         <div class="form-group">
                           <input type="text" class="form-control" id="nickname" maxlength="15" placeholder="Nickname" onkeypress="handleJoinGame(event)">
                         </div>
-                        <button type="button" class="btn btn-warning play-button" id="joinButton" onclick="joinGame()">JOGAR</button>
+                        <button type="button" class="btn btn-warning play-button" id="joinButton" onclick="callJoinGame()">JOGAR</button>
                     </form> 
 
                 </div>
@@ -156,48 +162,55 @@
 
         </div>
 
-        <script type="module">
+        <script>
 
-            import createGame from './game.js';
-            import renderGame from './render-game.js';
+            // import createGame from '/game.js';
+            // import renderGame from './render-game.js';,
 
-            var currentPlayer = {};       
+            const currentPlayerId = "NHC1";
+     
             const canvasScreen = document.getElementById('gameScreen');
             const scoreBoard = document.getElementById('scoreBoard');
             const game = createGame();     
 
-            canvasScreen.width = game.screenWidth;
-            canvasScreen.height = game.screenHeight;
+            canvasScreen.width = game.state.screenWidth;
+            canvasScreen.height = game.state.screenHeight;
 
             document.addEventListener('keydown', keydownListener);
             document.getElementById('nickname').focus();
 
             requestAnimationFrame(() => {
-                renderGame(game, canvasScreen, scoreBoard, currentPlayer)
+                renderGame(game, canvasScreen, scoreBoard, currentPlayerId)
             });
 
             function keydownListener(event) {                
-                game.movePlayer(event.key);
+                game.movePlayer(currentPlayerId, event.key);
             }
 
             function handleJoinGame(event) {
                 if(event.key == 'Enter') {
                     event.preventDefault(); 
-
-                    let name = document.getElementById('nickname').value;
-
-                    if(!name) {
-                        alert('Informe seu nickname para poder jogar');
-                        return;
-                    }
-
-                    currentPlayer = game.joinGame(name);
-                    hideJoinForm();
+                    callJoinGame();                    
                 }                               
+            }
+
+            function callJoinGame() {
+                let name = document.getElementById('nickname').value;
+
+                if(!name) {
+                    alert('Informe seu nickname para poder jogar');
+                    return;
+                }
+
+                game.joinGame(currentPlayerId, name);
+                hideJoinForm();
             }
 
             function hideJoinForm() {
                 document.getElementById('joinForm').style.display = 'none';
+                requestAnimationFrame(() => {
+                    renderGame(game, canvasScreen, scoreBoard, currentPlayerId)
+                });
             }
 
         </script>

@@ -1,4 +1,4 @@
-export default function renderGame(game, gameCanvas, scoreBoard, currentPlayer) {
+/*export default*/ function renderGame(game, gameCanvas, scoreBoard, currentPlayerId) {
 
     const screen = gameCanvas.getContext('2d');
     const state = game.state;
@@ -12,7 +12,7 @@ export default function renderGame(game, gameCanvas, scoreBoard, currentPlayer) 
         //Render Players
         for (let playerId in state.players) {
             let player = state.players[playerId];
-            screen.fillStyle = player.name == currentPlayer.name ? '#fbc02d' : '#002f6c';
+            screen.fillStyle = player.id == currentPlayerId ? '#fbc02d' : '#002f6c';
             screen.globalAlpha = 0.8;
             screen.fillRect(player.x, player.y, state.objectWidth, state.objectHeight);
     
@@ -46,41 +46,49 @@ export default function renderGame(game, gameCanvas, scoreBoard, currentPlayer) 
 
         let gamePlayers = [];
 
-        state.players.forEach((player) => {
+        for(playerId in state.players) {
+            let player = state.players[playerId];
             gamePlayers.push(player);
-        })
+        }
 
         let playersByScore = gamePlayers.sort((a,b) => { return b.score - a.score });
         let top10Players = playersByScore.slice(0, maxResults);
 
+        let playerNotInTop10 = true;
+
         top10Players.forEach((player, index) => {
             scoreTableInnerHtml += `
-                <tr class="${ player.name === currentPlayer.name ? 'current-player' : ''}">
+                <tr class="${ player.id === currentPlayerId ? 'current-player' : ''}">
                     <td class="rank">${index+1}º</td>
                     <td class="player">${player.name}</td>
                     <td class="score">${player.score}</td>
                 </tr>
             `;
+
+            if(player.id === currentPlayerId)
+                playerNotInTop10 = false;
         })
 
-        if(currentPlayer.name && top10Players.indexOf(currentPlayer) == -1) {
-            state.players[state.players.indexOf(currentPlayer)]
-            scoreTableInnerHtml += `
-                <tr>
-                    <td colspan="3" class="text-center">...</td>
-                </tr>
-                <tr class="current-player bottom">
-                    <td class="rank">${playersByScore.indexOf(currentPlayer)+1}º</td>
-                    <td class="player">${playersByScore[playersByScore.indexOf(currentPlayer)].name}</td>
-                    <td class="score">${playersByScore[playersByScore.indexOf(currentPlayer)].score}</td>
-                </tr>
-            `;
+        if(playerNotInTop10) {
+
+            let currentPlayer = state.players[currentPlayerId];
+            if(currentPlayer) 
+                scoreTableInnerHtml += `
+                    <tr>
+                        <td colspan="3" class="text-center">...</td>
+                    </tr>
+                    <tr class="current-player bottom">
+                        <td class="rank">${playersByScore.indexOf(currentPlayer)+1}º</td>
+                        <td class="player">${currentPlayer.name}</td>
+                        <td class="score">${currentPlayer.score}</td>
+                    </tr>
+                `;
         }
 
         scoreTableInnerHtml += `
             <tr class="footer">
                 <td colspan="2">Total de jogadores</td>
-                <td align="right">${state.players.length}</td>
+                <td align="right">${Object.keys(state.players).length}</td>
             </tr>
         `;
 

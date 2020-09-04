@@ -1,4 +1,4 @@
-export default function createGame() {
+/*export default*/ function createGame() {
 
     let screenWidth = 500;
     let screenHeight = 500;
@@ -9,21 +9,34 @@ export default function createGame() {
         screenHeight: screenHeight,
         objectWidth: screenWidth * objectSizeFactor,
         objectHeight: screenHeight * objectSizeFactor,                    
-        players: [],
-        goals: []
+        players: {},
+        goals: {}
     }
 
-    function joinGame(name) {
-        return insertPlayer(name);
+    setTimeout(() => {
+        insertGoal();
+        insertPlayer('RV1', 'Petrucio');
+        insertPlayer('RV2', 'Petrucio');
+        insertPlayer('RV3', 'Petrucio');
+        insertPlayer('RV4', 'Petrucio');
+        insertPlayer('RV5', 'Petrucio');
+        insertPlayer('RV6', 'Petrucio');
+        insertPlayer('RV7', 'Petrucio');
+        insertPlayer('RV8', 'Petrucio');
+        insertPlayer('RV9', 'Petrucio');
+        insertPlayer('RV10', 'Petrucio');
+    }, 5000);
+
+    function joinGame(id, name) {
+        insertPlayer(id, name);
     }
 
-    function insertPlayer(name) {
+    function insertPlayer(id, name) {
         let x = Math.floor((Math.random() * state.screenWidth) / state.objectWidth) * state.objectWidth; //Considers object width
         let y = Math.floor((Math.random() * state.screenHeight) / state.objectHeight) * state.objectHeight; //Considers object height
-        let newPlayer = createPlayer(name, x, y);
+        let newPlayer = createPlayer(id, name, x, y);
 
-        state.players.push(newPlayer);
-        return newPlayer;
+        state.players[id] = newPlayer;
     }
 
     function insertGoal() {
@@ -31,37 +44,40 @@ export default function createGame() {
         let y = Math.floor((Math.random() * state.screenHeight) / state.objectHeight) * state.objectHeight; //Considers object height
         let newGoal = createGoal(x, y);
 
-        state.goals.push(newGoal);
+        state.goals[Math.random()] = newGoal;
     }
 
-    function movePlayer(direction) {
+    function movePlayer(playerId, direction) {
+
+        let player = state.players[playerId];
+        if (!player) return;
         
         let hasMoved = false;
         switch (direction) {
             case 'ArrowUp':
-                if(currentPlayer.y - state.objectHeight >= 0) {
-                    currentPlayer.y -= state.objectHeight;
+                if(player.y - state.objectHeight >= 0) {
+                    player.y -= state.objectHeight;
                     hasMoved = true;
                 }
 
                 break;
             case 'ArrowRight':
-                if(currentPlayer.x + state.objectWidth < state.screenWidth) {
-                    currentPlayer.x += state.objectWidth;
+                if(player.x + state.objectWidth < state.screenWidth) {
+                    player.x += state.objectWidth;
                     hasMoved = true;
                 }
 
                 break;
             case 'ArrowDown':
-                if(currentPlayer.y + state.objectHeight < state.screenHeight) {
-                    currentPlayer.y += state.objectHeight;
+                if(player.y + state.objectHeight < state.screenHeight) {
+                    player.y += state.objectHeight;
                     hasMoved = true;
                 }
 
                 break;
             case 'ArrowLeft':
-                if(currentPlayer.x - state.objectWidth >= 0) {
-                    currentPlayer.x -= state.objectWidth;
+                if(player.x - state.objectWidth >= 0) {
+                    player.x -= state.objectWidth;
                     hasMoved = true;
                 }
 
@@ -69,7 +85,7 @@ export default function createGame() {
         }
         
         if(hasMoved)
-            handleGoalCollision(currentPlayer);
+            handleGoalCollision(player);
     }
 
     function handleGoalCollision(player) {
@@ -84,11 +100,12 @@ export default function createGame() {
     }
 
     function raisePlayerScore(player) {
-        state.players[state.players.indexOf(player)].score++;
+        state.players[player.id].score++;
     }
 
-    function createPlayer(name, x, y) {
+    function createPlayer(id, name, x, y) {
         return {
+            id: id,
             name: name,
             x: x,
             y: y,
